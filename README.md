@@ -673,9 +673,5 @@ This project is inspired by the foundational and modern work in systolic archite
 |------|------|-------|--------|
 | Project Associate | GAURAV DHAK | [GAURAVDHAK@NITGOA.AC.IN](mailto:GAURAVDHAK@NITGOA.AC.IN) | @gauravdhak |
 
-This project was developed by me as part of my own learning, curiosity, and knowledge-building journey.
+This project was developed by me as part of my own learning, curiosity, and knowledge-building journey, and to deepen my understanding of systolic array architecture and VLSI design.
 ---
-
-<div align="center">
-  <sub>Built with ❤️ by the Systolic Array Team</sub>
-</div>
