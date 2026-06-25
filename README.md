@@ -1,4 +1,4 @@
-# 🧮 Systolic Array Processor with Approximate Computing
+# Systolic Array Processor with Approximate Computing
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Verilog](https://img.shields.io/badge/Verilog-HDL-blue.svg)](https://en.wikipedia.org/wiki/Verilog)
@@ -9,503 +9,673 @@
 
 ---
 
-## 📖 Table of Contents
+## Overview
 
-- [Introduction](#-introduction)
-- [Why Systolic Array](#-why-systolic-array)
-- [Key Features](#-key-features)
-- [Architecture Overview](#-architecture-overview)
-  - [System Block Diagram](#system-block-diagram)
-  - [Processing Element (PE) Architecture](#processing-element-pe-architecture)
-  - [Interconnection Network](#interconnection-network)
-- [Dataflow Techniques](#-dataflow-techniques)
-  - [1. Output Stationary (OS)](#1-output-stationary-os)
-  - [2. Weight Stationary (WS)](#2-weight-stationary-ws)
-  - [3. Input Stationary (IS)](#3-input-stationary-is)
-  - [4. Axon Systolic Dataflow](#4-axon-systolic-dataflow)
-  - [Dataflow Comparison Table](#dataflow-comparison-table)
-- [Custom Approximate Multiplier](#-custom-approximate-multiplier)
-  - [Design Architecture](#design-architecture)
-  - [Accuracy vs Power Trade-off](#accuracy-vs-power-trade-off)
-  - [Implementation Details](#implementation-details)
-- [Array Size Expansion (2^N)](#-array-size-expansion-2n)
-  - [Supported Configurations](#supported-configurations)
-  - [Expansion Mechanism](#expansion-mechanism)
-  - [Scalability Analysis](#scalability-analysis)
-- [Global Control FSM](#-global-control-fsm)
-  - [State Machine Diagram](#state-machine-diagram)
-  - [FSM Implementation](#fsm-implementation)
-  - [Control Signals](#control-signals)
-- [Matrix Operations Supported](#-matrix-operations-supported)
-  - [Matrix Multiplication](#matrix-multiplication)
-  - [Convolution](#convolution)
-  - [FFT Operations](#fft-operations)
-  - [FIR Filtering](#fir-filtering)
-- [Power-Efficient Model](#-power-efficient-model)
-  - [Power Optimization Techniques](#power-optimization-techniques)
-  - [Power Breakdown Analysis](#power-breakdown-analysis)
-  - [Energy Efficiency Metrics](#energy-efficiency-metrics)
-- [Applications](#-applications)
-  - [Artificial Intelligence & ML](#artificial-intelligence--ml)
-  - [Signal Processing](#signal-processing)
-  - [Scientific Computing](#scientific-computing)
-  - [Computer Vision](#computer-vision)
-- [Advantages & Benefits](#-advantages--benefits)
-  - [Performance Advantages](#performance-advantages)
-  - [Power Efficiency](#power-efficiency)
-  - [Architectural Benefits](#architectural-benefits)
-  - [Cost Benefits](#cost-benefits)
-- [Installation & Setup](#-installation--setup)
-  - [Prerequisites](#prerequisites)
-  - [Quick Start](#quick-start)
-  - [Directory Structure](#directory-structure)
-- [Usage Guide](#-usage-guide)
-  - [Basic Matrix Multiplication](#basic-matrix-multiplication)
-  - [Configuring Dataflow](#configuring-dataflow)
-  - [Performance Analysis](#performance-analysis)
-  - [Waveform Visualization](#waveform-visualization)
-- [Performance Metrics](#-performance-metrics)
-  - [Throughput Analysis](#throughput-analysis)
-  - [Latency Comparison](#latency-comparison)
-  - [Power vs Performance Trade-off](#power-vs-performance-trade-off)
-  - [Area Analysis](#area-analysis)
-- [Results & Analysis](#-results--analysis)
-  - [Experimental Results](#experimental-results)
-  - [Comparison with State-of-the-Art](#comparison-with-state-of-the-art)
-  - [Benchmark Results](#benchmark-results)
-- [Testing & Verification](#-testing--verification)
-  - [Testbenches](#testbenches)
-  - [Coverage Analysis](#coverage-analysis)
-  - [Formal Verification](#formal-verification)
-- [Future Work](#-future-work)
-- [Contributing](#-contributing)
-  - [How to Contribute](#how-to-contribute)
-  - [Development Workflow](#development-workflow)
-- [License](#-license)
-- [Acknowledgments](#-acknowledgments)
-- [Contact](#-contact)
+**Systolic Array Processor with Approximate Computing** is a configurable hardware accelerator for high-throughput matrix operations, convolution, and tensor workloads. It combines a scalable systolic array, multiple dataflow modes, and a custom approximate multiplier to reduce power while keeping performance high.
+
+The design is intended for:
+- FPGA prototyping.
+- ASIC research.
+- AI/ML acceleration.
+- Signal and image processing.
 
 ---
 
-## 🎯 Introduction
+## Table of Contents
 
-**Systolic Array Processor** is a high-performance, power-efficient computing architecture designed specifically for parallel processing of matrix operations and tensor computations. This repository implements a fully configurable systolic array with multiple dataflow techniques, featuring a custom approximate multiplier that achieves 40% power reduction with 95% accuracy.
-
-A systolic array is a homogeneous network of tightly coupled Processing Elements (PEs) where data flows synchronously through the array, akin to blood flowing through the heart. Each PE computes a partial result and passes it to its neighbors, creating a data flow pattern that maximizes parallelism and data reuse.
-
-### The Systolic Array Concept
-
-The term "systolic" was coined by H.T. Kung in 1982, drawing an analogy to the systolic contraction of the heart. Just as the heart pumps blood rhythmically through the circulatory system, a systolic array pumps data rhythmically through the processing elements. This approach yields several key benefits:
-
-- **Massive Data-Level Parallelism**: All PEs operate simultaneously on different data elements
-- **Reduced Memory Bandwidth**: Data is reused as it flows through the array
-- **Regular and Scalable Structure**: Easy to implement and expand
-- **Deterministic Performance**: Predictable execution time
-- **Power Efficiency**: Reduced data movement significantly reduces energy consumption
-
-## 🎯 Why Systolic Array?
-
-### The Problem with Traditional Architectures
-Traditional von Neumann architectures face significant challenges in modern computing:
-- **Memory Wall**: Processor speed outpaces memory bandwidth
-- **Power Wall**: Data movement consumes more energy than computation
-- **Instruction Overhead**: Control logic adds latency and power
-
-### How Systolic Arrays Solve These Problems
-| Problem | Traditional Solution | Systolic Array Solution |
-|---------|---------------------|------------------------|
-| Memory Bandwidth | Increase cache size | **Data reuse** (80% fewer memory accesses) |
-| Power Consumption | Lower voltage/frequency | **Approximate computing** (40% power saving) |
-| Scalability | More cores/units | **Regular 2D mesh** (Easy to scale) |
-| Latency | Faster clocks | **Pipeline parallelism** (Less waiting) |
-| Throughput | Wider datapaths | **Massive parallelism** (All PEs active) |
-
-### Key Performance Metrics
-Traditional CPU: 1 operation/cycle
-GPU: 10-100 operations/cycle
-Systolic Array: 1000+ operations/cycle (for 32×32 array)
----
-
-## ✨ Key Features
-
-| Feature | Description | Status |
-|---------|-------------|--------|
-| **Configurable Array Size** | 2^N × 2^N where N = 1 to 8 | ✅ |
-| **Multiple Dataflow Modes** | OS, WS, IS, and Axon Systolic | ✅ |
-| **Custom Approximate Multiplier** | 40% power reduction, 95% accuracy | ✅ |
-| **Global FSM Control** | Centralized state management | ✅ |
-| **Power-Efficient Design** | Dynamic voltage/frequency scaling | ✅ |
-| **Scalable Architecture** | Easy expansion for larger matrices | ✅ |
-| **HDL Implementation** | Verilog/VHDL compatible | ✅ |
-| **Comprehensive Testbench** | Unit, integration, and system tests | ✅ |
-| **Python Analysis Tools** | Performance, power, and accuracy analysis | ✅ |
-| **Waveform Visualization** | GTKWave compatible output | ✅ |
-| **Synthesis Ready** | ASIC and FPGA compatible | ✅ |
-| **Documentation** | Complete architecture and user guide | ✅ |
+- [Overview](#overview)
+- [Why Systolic Array](#why-systolic-array)
+- [Key Features](#key-features)
+- [Architecture Overview](#architecture-overview)
+- [System Block Diagram](#system-block-diagram)
+- [Processing Element](#processing-element)
+- [Dataflow Techniques](#dataflow-techniques)
+- [Custom Approximate Multiplier](#custom-approximate-multiplier)
+- [Array Size Expansion](#array-size-expansion)
+- [Global Control FSM](#global-control-fsm)
+- [Supported Operations](#supported-operations)
+- [Power-Efficient Model](#power-efficient-model)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Performance Metrics](#performance-metrics)
+- [Testing and Verification](#testing-and-verification)
+- [Future Work](#future-work)
+- [Contributing](#contributing)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+- [Contact](#contact)
 
 ---
 
-## 🏗️ Architecture Overview
+## Why Systolic Array
 
-### Processing Element (PE) Architecture
+A systolic array is a regular mesh of processing elements that computes by passing data rhythmically between neighbors. This reduces memory traffic, increases reuse, and makes the architecture easier to scale.
 
-Each Processing Element is the fundamental building block of the systolic array. It's designed to be simple yet powerful, enabling high parallelism and efficiency.
-
-### Interconnection Network
-
-The interconnection network is a crucial component that determines how data flows between PEs. This implementation supports a 2D mesh topology with the following characteristics:
-
-**Topology Features**:
-- Bidirectional communication between adjacent PEs
-- H-tree clock distribution for minimal skew (< 10ps)
-- Dedicated data paths for A, B, and C matrices
-- Dataflow-dependent routing
+Compared with a traditional CPU-style flow, this design is better suited for:
+- Matrix multiplication.
+- Convolution.
+- Neural network inference.
+- Streaming DSP workloads.
 
 ---
-## 🔄 Dataflow Techniques
 
-### 1. Output Stationary (OS)
+## Key Features
 
-In Output Stationary dataflow, the output results accumulate in the PEs while input data streams through.
+| Feature | Description |
+|--------|-------------|
+| Configurable size | 2^N × 2^N array, where N = 1 to 8 |
+| Multiple dataflows | OS, WS, IS, and Axon Systolic |
+| Approximate multiplier | Lower power, configurable accuracy |
+| Global FSM | Centralized control for execution flow |
+| Scalable design | Suitable for small to large arrays |
+| Python tools | Analysis, profiling, and plotting |
+| Verification support | Testbenches and waveform inspection |
+| Synthesis ready | FPGA and ASIC compatible |
 
-**Characteristics**:
-- Results accumulate in PE registers
-- Input A and B values flow through array
-- Minimal internal data movement
-- Best for dot product computations
-**Implementation**:
+---
+
+## Architecture Overview
+
+The design is organized into a top-level controller, a 2D array of processing elements, interconnect logic, and supporting analysis scripts.
+
+### Main modules
+- `top.v`: Top-level integration.
+- `pe.v`: Processing element.
+- `approx_multiplier.v`: Approximate multiplier.
+- `fsm.v`: Global control state machine.
+- `array.v`: Systolic array interconnect.
+- `tb/`: Testbench files.
+- `tools/`: Python analysis scripts.
+
+---
+
+## System Block Diagram
+
+```mermaid
+flowchart TD
+    A[Input Matrices A and B] --> B[Load Controller]
+    B --> C[Global FSM]
+    C --> D[Systolic Array Top Module]
+    D --> E[Processing Element Grid]
+    E --> F[Interconnect Network]
+    E --> G[Approximate Multiplier]
+    G --> H[Partial Sum Accumulation]
+    H --> I[Output Matrix C]
+    C --> J[Status Signals: start, done, ready]
+```
+
+This flow shows how operands enter the controller, get distributed into the array, and produce the final result.
+
+---
+
+## Processing Element
+
+Each processing element performs multiply-accumulate operations and forwards values to adjacent PEs.
+
 ```verilog
-// OS Dataflow Control
+module pe #(
+    parameter DATA_WIDTH = 16
+)(
+    input  wire                   clk,
+    input  wire                   rst,
+    input  wire                   valid_in,
+    input  wire [DATA_WIDTH-1:0]  a_in,
+    input  wire [DATA_WIDTH-1:0]  b_in,
+    input  wire [2*DATA_WIDTH-1:0] c_in,
+    output reg  [DATA_WIDTH-1:0]  a_out,
+    output reg  [DATA_WIDTH-1:0]  b_out,
+    output reg  [2*DATA_WIDTH-1:0] c_out
+);
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            a_out <= 0;
+            b_out <= 0;
+            c_out <= 0;
+        end else if (valid_in) begin
+            a_out <= a_in;
+            b_out <= b_in;
+            c_out <= c_in + (a_in * b_in);
+        end
+    end
+endmodule
+```
+
+This PE structure is simple, pipeline-friendly, and easy to replicate across the array.
+
+---
+
+## Dataflow Techniques
+
+### Output Stationary (OS)
+
+In OS mode, partial sums stay inside the PE while inputs move across the array. This reduces output movement and is efficient for standard matrix multiplication.
+
+```verilog
 always @(posedge clk) begin
     if (dataflow_mode == OS) begin
-        // A and B flow through
         a_out <= a_in;
         b_out <= b_in;
-        
-        // C accumulates
-        c_reg <= c_in + (a_in * b_in);
+        c_reg <= c_reg + (a_in * b_in);
         c_out <= c_reg;
-    end
-end
-
-Weight Stationary (WS)
-In Weight Stationary dataflow, weights stay in PEs while inputs flow through. This is ideal for neural network inference.
-Timing Diagram:
-
-Time Step 1:    Time Step 2:    Time Step 3:    Time Step 4:
-   A00              A01              A02              A03
-   ┌─────┐          ┌─────┐          ┌─────┐          ┌─────┐
-   │PE00 │          │PE00 │          │PE00 │          │PE00 │
-   │W00  │          │W00  │          │W00  │          │W00  │
-   │C00  │          │C01  │          │C02  │          │C03  │
-   └─────┘          └─────┘          └─────┘          └─────┘
-   ↓                ↓                ↓                ↓
-   A10              A11              A12              A13
-   ┌─────┐          ┌─────┐          ┌─────┐          ┌─────┐
-   │PE10 │          │PE10 │          │PE10 │          │PE10 │
-   │W10  │          │W10  │          │W10  │          │W10  │
-   │C10  │          │C11  │          │C12  │          │C13  │
-   └─────┘          └─────┘          └─────┘          └─────┘
-Characteristics:
-
-Weights are pre-loaded and stationary
-
-Input data flows through the array
-
-Partial results accumulate in PEs
-
-Ideal for DNN inference workloads
-
-Implementation:
-// WS Dataflow Control
-always @(posedge clk) begin
-    if (dataflow_mode == WS) begin
-        // A flows through
-        a_out <= a_in;
-        
-        // B is stationary (weight)
-        b_out <= b_in;  // b_in is weight
-        
-        // Accumulate results
-        c_reg <= c_reg + (a_in * b_weight);
-        c_out <= c_reg;
-    end
-end
-
-3. Input Stationary (IS)
-In Input Stationary dataflow, inputs stay in PEs while weights flow through.
-
-Timing Diagram:
-
-Time Step 1:    Time Step 2:    Time Step 3:    Time Step 4:
-   W00              W01              W02              W03
-   ┌─────┐          ┌─────┐          ┌─────┐          ┌─────┐
-   │PE00 │          │PE00 │          │PE00 │          │PE00 │
-   │A00  │          │A00  │          │A00  │          │A00  │
-   │C00  │          │C01  │          │C02  │          │C03  │
-   └─────┘          └─────┘          └─────┘          └─────┘
-   ↓                ↓                ↓                ↓
-   W10              W11              W12              W13
-   ┌─────┐          ┌─────┐          ┌─────┐          ┌─────┐
-   │PE10 │          │PE10 │          │PE10 │          │PE10 │
-   │A10  │          │A10  │          │A10  │          │A10  │
-   │C10  │          │C11  │          │C12  │          │C13  │
-   └─────┘          └─────┘          └─────┘          └─────┘
-Characteristics:
-
-Inputs are pre-loaded and stationary
-
-Weights flow through the array
-
-Good for streaming data applications
-
-Implementation:
-// IS Dataflow Control
-always @(posedge clk) begin
-    if (dataflow_mode == IS) begin
-        // B (weight) flows through
-        b_out <= b_in;
-        
-        // A is stationary (input)
-        a_out <= a_in;  // a_in is input
-        
-        // Accumulate results
-        c_reg <= c_reg + (a_input * b_in);
-        c_out <= c_reg;
-    end
-end
-4. Axon Systolic Dataflow
-Axon dataflow is a specialized technique where data flows diagonally across the array, maximizing throughput for matrix multiplication.
-Timing Diagram:
-        t=1     t=2     t=3     t=4
-        ┌─────┐ ┌─────┐ ┌─────┐ ┌─────┐
-   A00→ │P00  │→│P01  │→│P02  │→│P03  │
-        │  ┌──┼─┤  ┌──┼─┤  ┌──┼─┤     │
-   A10→ │  │P10│→│  │P11│→│  │P12│→│P13 │
-        │  │  ┌┼─┤  │  ┌┼─┤  │  ┌┼─┤  │
-   A20→ │  │  │P20│→│  │  │P21│→│  │  │P22│
-        │  │  │  ┌┼─┤  │  │  ┌┼─┤  │  │
-   A30→ │  │  │  │P30│→│  │  │  │P31│→│  │
-        └──┼──┼──┼──┼─┘  │  │  │  │  │
-           B00 B10 B20 B30 B01 B11 B21 B31
-Characteristics:
-
-Data flows diagonally through array
-
-Optimal for matrix multiplication
-
-Minimal latency
-
-Maximum throughput
-
-Implementation:
-// Axon Dataflow Control
-always @(posedge clk) begin
-    if (dataflow_mode == AXON) begin
-        // Diagonal data propagation
-        a_out <= (i == 0) ? a_in : pe_a_in[i-1][j];
-        b_out <= (j == 0) ? b_in : pe_b_in[i][j-1];
-        
-        // Accumulate at current PE
-        c_reg <= c_reg + (a_out * b_out);
-        c_out <= c_reg;
-        
-        // Pass results to next diagonal
-        if (i == 0 || j == 0)
-            c_diag_out <= c_reg;
     end
 end
 ```
 
-## 📊 Dataflow Comparison Table
+### Weight Stationary (WS)
 
-| Feature | 🔵 Output Stationary (OS) | 🟢 Weight Stationary (WS) | 🟡 Input Stationary (IS) | 🔴 Axon Systolic |
-|---------|:-------------------------:|:-------------------------:|:-------------------------:|:----------------:|
-| **Latency** | Medium | High | Medium | **Low ⭐** |
-| **Throughput** | High | Medium | High | **Very High ⭐** |
-| **Power Consumption** | Medium | **Low ⭐** | Medium | Medium |
-| **Memory Access** | Medium | **Low ⭐** | High | Medium |
-| **Data Reuse** | High | **Very High ⭐** | Medium | High |
-| **Best Application** | Matrix Multiplication | DNN Inference | Signal Processing | Real-time Processing |
-| **Implementation Complexity** | Low ✅ | Medium | Low ✅ | High |
-| **Area Overhead** | Low ✅ | Medium | Low ✅ | Medium |
-| **Energy Efficiency** | Good | **Excellent ⭐** | Good | Very Good |
-| **PE Utilization** | 100% | 67% | 100% | 100% |
-| **Hardware Overhead** | 0% | 15% | 0% | 25% |
-| **Scalability** | Excellent | Good | Excellent | Moderate |
-| **Control Complexity** | Simple | Moderate | Simple | Complex |
-| **I/O Bandwidth** | Medium | Low | High | Medium |
-
-**📌 Quick Selection Guide:**
-- **Choose OS**: For matrix multiplication and scientific computing
-- **Choose WS**: For power-efficient DNN/ML inference
-- **Choose IS**: For DSP and streaming applications
-- **Choose AXON**: For maximum performance in real-time systems
-
-**🏆 Performance Ranking by Metric:**
-| Metric | 1st Place | 2nd Place | 3rd Place | 4th Place |
-|--------|-----------|-----------|-----------|-----------|
-| Speed | AXON | OS/IS | - | WS |
-| Power | WS | AXON | OS/IS | - |
-| Efficiency | WS | AXON | OS | IS |
-| Versatility | OS | IS | WS | AXON |
-| Simplicity | OS/IS | WS | - | AXON |
-
-## 🧮 Custom Approximate Multiplier
-
-### Design Architecture
-
-The custom approximate multiplier is the heart of the power-efficient design, achieving **40% power reduction** while maintaining **95% accuracy**. 
-This innovative design leverages approximation techniques to significantly reduce power consumption without substantially compromising computational accuracy,
-making it ideal for error-resilient applications like machine learning and signal processing.
-
-
-### Key Design Innovations
-
-| Innovation | Description | Benefit |
-|------------|-------------|---------|
-| **LSB Truncation** | Skipping computation of least significant bits | 40% power reduction |
-| **Approx Compression** | Using approximate 4:2 compressors | 30% area reduction |
-| **Booth Encoding** | Radix-4 Booth algorithm with approximation | 25% speed improvement |
-| **Error Detection** | Built-in error flag generation | 95% accuracy guarantee |
-| **Adaptive Correction** | Dynamic error correction logic | 98% effective accuracy |
-
-### Implementation Details
-
-#### 1. Partial Product Generation
-
-The partial product generator uses Booth encoding with LSB truncation to reduce computation while maintaining accuracy.
+In WS mode, weights remain fixed inside the PEs while inputs stream through. This is useful for inference workloads.
 
 ```verilog
-module PartialProductGen #(
-    parameter WIDTH = 16,
-    parameter APPROX_BITS = 4  // Number of LSBs to approximate
-)(
-    input [WIDTH-1:0] a, b,
-    output [WIDTH-1:0] pp [WIDTH-1:0]  // Partial products
-);
-    genvar i, j;
-    generate
-        for (i = 0; i < WIDTH; i = i + 1) begin
-            for (j = 0; j < WIDTH; j = j + 1) begin
-                // Skip lower bits for approximation
-                if (i + j < WIDTH - APPROX_BITS)
-                    assign pp[i][j] = a[i] & b[j];
-                else
-                    assign pp[i][j] = 1'b0;  // Approximate zeros
-            end
-        end
-    endgenerate
-endmodule
-
+always @(posedge clk) begin
+    if (dataflow_mode == WS) begin
+        a_out <= a_in;
+        c_reg <= c_reg + (a_in * weight_reg);
+        c_out <= c_reg;
+    end
+end
 ```
-🚀 Future Work
-Short-term Goals
-RISC-V Integration: Embed systolic array as a coprocessor
 
-Chip Implementation: Tape-out on 28nm/16nm technology
+### Input Stationary (IS)
 
-Multi-precision Support: 8-bit, 16-bit, 32-bit modes
+In IS mode, inputs stay fixed while weights flow through the array. This is useful for streaming and filter-based applications.
 
-Sparse Computation: Support sparse matrix operations
+```verilog
+always @(posedge clk) begin
+    if (dataflow_mode == IS) begin
+        b_out <= b_in;
+        c_reg <= c_reg + (input_reg * b_in);
+        c_out <= c_reg;
+    end
+end
+```
 
-Fault Tolerance: Add redundancy and error correction
+### Axon Systolic
 
-Mid-term Goals
-AI Accelerator: Complete DNN inference pipeline
+In Axon mode, values propagate diagonally for high-throughput matrix multiplication.
 
-Tensor Core Support: 4×4 tensor operations
+```verilog
+always @(posedge clk) begin
+    if (dataflow_mode == AXON) begin
+        a_out <= (i == 0) ? a_in : pe_a_in[i-1][j];
+        b_out <= (j == 0) ? b_in : pe_b_in[i][j-1];
+        c_reg <= c_reg + (a_out * b_out);
+        c_out <= c_reg;
+    end
+end
+```
 
-Mixed Precision: FP16/BF16/INT8 support
-
-Memory Hierarchy: On-chip SRAM optimization
-
-Compiler Support: MLIR/TVM integration
-
-Long-term Goals
-3D Stacking: Vertical integration for higher density
-
-Optical Interconnects: Photonic communication
-
-In-memory Computing: Processing-in-memory integration
-
-Quantum Computing: Hybrid quantum-classical systems
-
-Neuromorphic: Spiking neural network support
+### Dataflow Comparison
 
 
-🙏 Acknowledgments
-Prof. H.T. Kung: For pioneering the systolic array concept
+### Dataflow Comparison
 
-OpenROAD Project: For open-source physical design tools
+| Mode | Latency | Throughput | Power | Best Use |
+|------|---------|------------|-------|----------|
+| OS | Medium | High | Medium | Matrix multiplication |
+| WS | High | Medium | Low | DNN inference |
+| IS | Medium | High | Medium | DSP / streaming |
+| AXON | Low | Very High | Medium | Real-time processing |
 
-Google Research: For TPU inspiration and benchmarks
+---
 
-Berkeley Architecture Group: For Gem5 simulator
+## PE Array and Dataflow Propagation
 
-OpenMPI Community: For parallel computing standards
+### Generic PE Array Layout
 
-Publications
-"Approximate Systolic Array for DNN Acceleration" - IEEE TCAD 2025
+```mermaid
+flowchart LR
+    A[A Matrix Inputs] --> R0[Row Input Network]
+    B[B Matrix Inputs] --> C0[Column Input Network]
 
-"Power-Efficient Dataflow Techniques" - DAC 2024
+    subgraph SA[Systolic Array PE Grid]
+        direction LR
 
-"Custom Approximate Multiplier Design" - ISLPED 2024
+        subgraph ROW0[Row 0]
+            PE00[PE00] --> PE01[PE01] --> PE02[PE02] --> PE03[PE03]
+        end
 
-"Systolic Array for Edge AI" - DATE 2025
+        subgraph ROW1[Row 1]
+            PE10[PE10] --> PE11[PE11] --> PE12[PE12] --> PE13[PE13]
+        end
 
-Related Projects
-Google TPU
+        subgraph ROW2[Row 2]
+            PE20[PE20] --> PE21[PE21] --> PE22[PE22] --> PE23[PE23]
+        end
 
-MIT Eyeriss
+        subgraph ROW3[Row 3]
+            PE30[PE30] --> PE31[PE31] --> PE32[PE32] --> PE33[PE33]
+        end
+    end
 
-NVIDIA Tensor Core
+    R0 --> PE00
+    R0 --> PE10
+    R0 --> PE20
+    R0 --> PE30
 
-ARM Matrix Multiply
+    C0 --> PE00
+    C0 --> PE01
+    C0 --> PE02
+    C0 --> PE03
+```
 
-📧 Contact
-Role	Email	GitHub
-Project Lead	lead@systolicarray.com	@projectlead
-Architecture	arch@systolicarray.com	@architect
-Verification	verify@systolicarray.com	@verifier
-Documentation	docs@systolicarray.com	@docwriter
-Support
-Issues: GitHub Issues
+### OS Data Propagation
 
-Discussions: GitHub Discussions
+```mermaid
+flowchart TD
+    A[A values move right] --> PE00[PE00]
+    B[B values move down] --> PE00
 
-Wiki: Project Wiki
+    PE00 --> PE01[PE01]
+    PE01 --> PE02[PE02]
+    PE02 --> PE03[PE03]
 
-📚 References
-H.T. Kung, "Why Systolic Architectures?" IEEE Computer, 1982
+    PE00 --> PE10[PE10]
+    PE10 --> PE20[PE20]
+    PE20 --> PE30[PE30]
 
-J. Jouppi et al., "In-Datacenter Performance Analysis of a Tensor Processing Unit," ISCA 2017
+    PE00 --> C00[C00 accumulates in PE]
+    PE01 --> C01[C01 accumulates in PE]
+    PE02 --> C02[C02 accumulates in PE]
+    PE03 --> C03[C03 accumulates in PE]
 
-Y. Chen et al., "Eyeriss: An Energy-Efficient Reconfigurable Accelerator for Deep Convolutional Neural Networks," ISSCC 2016
+    PE10 --> C10[C10 accumulates in PE]
+    PE20 --> C20[C20 accumulates in PE]
+    PE30 --> C30[C30 accumulates in PE]
+```
 
-S. Venkataramani et al., "Approximate Computing and the Quest for Computing Efficiency," DAC 2015
+### WS Data Propagation
 
-W. Qadeer et al., "Convolution Engine: Balancing Efficiency and Flexibility," MICRO 2013
+```mermaid
+flowchart TD
+    A[Input activations A] --> P0[PEs]
+    A --> P1[PEs]
+    A --> P2[PEs]
 
-M. Alwani et al., "Fused-Layer CNN Accelerators," MICRO 2016
+    W[Weights B stay stationary in PEs] --> P0
+    W --> P1
+    W --> P2
 
-N. Goulding-Hotta et al., "The GreenDroid Mobile Application Processor," IEEE Micro 2012
+    P0 --> P0C[C accumulation]
+    P1 --> P1C[C accumulation]
+    P2 --> P2C[C accumulation]
 
-R. Nair, "Evolution of Memory Architecture," IEEE Micro 2015
+    P0 --> A1[Next input]
+    P1 --> A2[Next input]
+    P2 --> A3[Next input]
+```
 
-<div align="center"> <sub>Built with ❤️ by the Systolic Array Team</sub> </div><div align="center">
-  <sub>© 2026 Systolic Array Project - All Rights Reserved</sub> </div>
+### IS Data Propagation
 
-  
-This completes the entire README.md file with:
-- ✅ Comprehensive ending section
-- ✅ Experimental results
-- ✅ Benchmark comparisons
-- ✅ Testing and verification
-- ✅ Future work roadmap
-- ✅ Contributing guidelines
-- ✅ License information
-- ✅ Acknowledgments
-- ✅ References
-- ✅ Quick command reference
-- ✅ Professional closing
+```mermaid
+flowchart TD
+    A[Input A stays in PE] --> PE00[PE00]
+    A --> PE10[PE10]
+    A --> PE20[PE20]
+    A --> PE30[PE30]
+
+    B[Weights B move through array] --> PE00
+    PE00 --> PE01[PE01]
+    PE01 --> PE02[PE02]
+    PE02 --> PE03[PE03]
+
+    B --> PE10
+    PE10 --> PE11[PE11]
+    PE11 --> PE12[PE12]
+    PE12 --> PE13[PE13]
+
+    PE00 --> C00[C accumulation]
+    PE10 --> C10[C accumulation]
+    PE20 --> C20[C accumulation]
+    PE30 --> C30[C accumulation]
+```
+
+### AXON Diagonal Feeding
+
+```mermaid
+flowchart TD
+    A0[A00] --> PE00[PE00]
+    A1[A10] --> PE10[PE10]
+    A2[A20] --> PE20[PE20]
+    A3[A30] --> PE30[PE30]
+
+    B0[B00] --> PE00
+    B1[B10] --> PE01[PE01]
+    B2[B20] --> PE02[PE02]
+    B3[B30] --> PE03[PE03]
+
+    PE00 --> PE01
+    PE01 --> PE02
+    PE02 --> PE03
+
+    PE10 --> PE11[PE11]
+    PE11 --> PE12[PE12]
+    PE12 --> PE13[PE13]
+
+    PE20 --> PE21[PE21]
+    PE21 --> PE22[PE22]
+    PE22 --> PE23[PE23]
+
+    PE30 --> PE31[PE31]
+    PE31 --> PE32[PE32]
+    PE32 --> PE33[PE33]
+
+    PE00 --> D1[Diagonal propagation]
+    PE11 --> D2[Diagonal propagation]
+    PE22 --> D3[Diagonal propagation]
+    PE33 --> D4[Diagonal propagation]
+```
+
+### Dataflow Summary
+
+- **OS (Output Stationary):** partial sums remain in the PE.
+- **WS (Weight Stationary):** weights remain in the PE.
+- **IS (Input Stationary):** inputs remain in the PE.
+- **AXON:** diagonal feeding pattern for fast systolic propagation.
+
+These modes allow the same hardware to support different workloads with different performance and power trade-offs.
+
+---
+
+## Custom Approximate Multiplier
+
+The approximate multiplier reduces power and area by using approximation in lower-order bits.
+
+### Key ideas
+- LSB truncation.
+- Approximate compressor logic.
+- Booth-style partial products.
+- Optional correction logic.
+
+```verilog
+module approx_multiplier #(
+    parameter WIDTH = 16,
+    parameter APPROX_BITS = 4
+)(
+    input  wire [WIDTH-1:0] a,
+    input  wire [WIDTH-1:0] b,
+    output wire [2*WIDTH-1:0] p
+);
+
+    wire [2*WIDTH-1:0] exact_product;
+    assign exact_product = a * b;
+
+    assign p = exact_product & ~((1 << APPROX_BITS) - 1);
+endmodule
+```
+
+This block can be replaced by a more advanced approximate implementation if you want stronger power savings.
+
+---
+
+## Array Size Expansion
+
+The array is parameterized to support power-of-two sizes.
+
+### Supported configurations
+- 2×2
+- 4×4
+- 8×8
+- 16×16
+- 32×32
+- 64×64
+- 128×128
+- 256×256
+
+### Expansion mechanism
+
+```mermaid
+flowchart LR
+    A[2x2 Tile] --> B[4x4 Array]
+    B --> C[8x8 Array]
+    C --> D[16x16 Array]
+    D --> E[32x32 Array]
+    E --> F[64x64 Array]
+```
+
+The array grows by composing smaller reusable tiles, which keeps the design modular and easier to verify.
+
+---
+
+## Global Control FSM
+
+The FSM manages array operation from reset to completion.
+
+```mermaid
+stateDiagram-v2
+    [*] --> IDLE
+    IDLE --> LOAD : start
+    LOAD --> COMPUTE : data_loaded
+    COMPUTE --> DRAIN : done_compute
+    DRAIN --> DONE : outputs_ready
+    DONE --> IDLE : ack
+    COMPUTE --> ERROR : fault
+    LOAD --> ERROR : fault
+    ERROR --> IDLE : reset
+```
+
+### Example FSM skeleton
+
+```verilog
+module control_fsm (
+    input  wire clk,
+    input  wire rst,
+    input  wire start,
+    input  wire compute_done,
+    input  wire outputs_done,
+    output reg  load_en,
+    output reg  compute_en,
+    output reg  drain_en,
+    output reg  done
+);
+
+    typedef enum logic [2:0] {IDLE, LOAD, COMPUTE, DRAIN, DONE} state_t;
+    state_t state, next_state;
+
+    always @(posedge clk or posedge rst) begin
+        if (rst) state <= IDLE;
+        else state <= next_state;
+    end
+endmodule
+```
+
+---
+
+## Supported Operations
+
+The architecture supports multiple matrix and DSP workloads.
+
+### Operations
+- Matrix multiplication.
+- Convolution.
+- FIR filtering.
+- Tensor-style multiply-accumulate operations.
+- Streaming linear algebra kernels.
+
+### Example matrix multiply flow
+
+```verilog
+// C = A x B
+for (i = 0; i < M; i = i + 1) begin
+    for (j = 0; j < N; j = j + 1) begin
+        c[i][j] = 0;
+        for (k = 0; k < K; k = k + 1) begin
+            c[i][j] = c[i][j] + a[i][k] * b[k][j];
+        end
+    end
+end
+```
+
+---
+
+## Power-Efficient Model
+
+The design reduces power through data reuse and approximate arithmetic.
+
+### Techniques used
+- Reduced memory movement.
+- Lower switching activity.
+- Approximate multiplication.
+- Optional clock gating.
+- Parameterized precision.
+
+### Efficiency goals
+- Lower MAC energy.
+- Better TOPS/W.
+- Reduced interconnect cost.
+- Good accuracy for error-tolerant workloads.
+
+---
+
+## Installation
+
+### Prerequisites
+- Verilog/SystemVerilog simulator.
+- Python 3.8+.
+- GTKWave.
+- Optional synthesis toolchain.
+
+### Clone the repository
+
+```bash
+git clone https://github.com/yourusername/systolic-array.git
+cd systolic-array
+```
+
+### Run simulation
+
+```bash
+make sim
+```
+
+### Run analysis tools
+
+```bash
+python3 tools/analysis/run_analysis.py
+```
+
+---
+
+## Usage
+
+### Configure the design
+Set parameters in your config file or top module:
+- `ARRAY_SIZE`
+- `DATA_WIDTH`
+- `DATAFLOW_MODE`
+- `APPROX_BITS`
+
+### Simulate a test case
+1. Load matrix data.
+2. Select a dataflow.
+3. Run the simulation.
+4. Compare output with the reference model.
+
+### View waveforms
+
+```bash
+gtkwave dump.vcd
+```
+
+---
+
+## Performance Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Throughput | Number of MACs per cycle or per second |
+| Latency | Time from input load to valid output |
+| Power | Dynamic and static power estimate |
+| Accuracy | Match against exact multiplication |
+| Area | RTL or synthesized resource usage |
+
+---
+
+## Testing and Verification
+
+### Testbenches
+- PE unit tests.
+- Array integration tests.
+- End-to-end matrix tests.
+- Approximate multiplier checks.
+
+### Verification flow
+- Run RTL simulation.
+- Compare outputs against a Python golden model.
+- Inspect waveforms in GTKWave.
+- Add assertions for control and timing correctness.
+
+```bash
+make test
+make wave
+```
+
+---
+
+## Future Work
+
+Planned improvements include:
+- RISC-V coprocessor integration.
+- Sparse matrix support.
+- Mixed-precision support.
+- Fault tolerance.
+- Memory hierarchy optimization.
+- MLIR/TVM integration.
+- ASIC tape-out exploration.
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+### Workflow
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement your changes.
+4. Add tests.
+5. Submit a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the `LICENSE` file for details.
+
+---
+
+## Acknowledgments
+
+This project is inspired by the foundational and modern work in systolic architectures, VLSI design, and accelerator-based computing.
+
+- **H.T. Kung** for introducing and popularizing systolic architectures as a general methodology for mapping computations into regular hardware structures.
+- **Charles E. Leiserson** and **H.T. Kung** for early work on systolic and VLSI-oriented computation models.
+- **Google Research / Google TPU team** for demonstrating the practical impact of systolic arrays in large-scale machine learning acceleration.
+- **Researchers in approximate computing** for showing how accuracy-aware arithmetic can reduce power and area in digital systems.
+- **Researchers in low-power VLSI architecture** for techniques such as clock gating, data reuse, and energy-aware datapath design.
+- **Researchers in dataflow-based accelerators** for Output Stationary, Weight Stationary, and Input Stationary processing models.
+- **Academic and industrial work on matrix multiplication accelerators, CNN accelerators, and tensor processing engines** that helped shape modern systolic-array design practices.
+- **Carnegie Mellon University and related systolic architecture research groups** for advancing the original architectural concepts.
+- **The open-source hardware and EDA community** for enabling RTL design, simulation, verification, and synthesis workflows.
+
+### Selected References
+- H.T. Kung, *Why Systolic Architectures?*
+- H.T. Kung and Charles E. Leiserson, early systolic/VLSI computation research.
+- Jouppi et al., *In-Datacenter Performance Analysis of a Tensor Processing Unit.*
+- Eyeriss-related energy-efficient accelerator research.
+- Approximate computing literature on low-power arithmetic and error-tolerant design.
+
+---
+
+## Contact
+
+| Role | Name | Email | GitHub |
+|------|------|-------|--------|
+| Project Associate | GAURAV DHAK | [GAURAVDHAK@NITGOA.AC.IN](mailto:GAURAVDHAK@NITGOA.AC.IN) | @gauravdhak |
+
+This project was developed by me as part of my own learning, curiosity, and knowledge-building journey.
+---
+
+<div align="center">
+  <sub>Built with ❤️ by the Systolic Array Team</sub>
+</div>
